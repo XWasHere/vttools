@@ -11,14 +11,15 @@
   /**
    * @type {Uint8Array}
   */
-  let rbuf  = null;
-  let rbufp = 0;
-  let rbufs = 100;
+  let rbuf   = null;
+  let rbufp  = 0;
+  let rbufs  = 5000;
+  let rbufiv = 10;
   /** @type {AnalyserNode} */
-  let rbufa = null;
-  let rbuft = null;
-  let rbufi = null;
-  let rbufw = 4096;   // frequency bin count
+  let rbufa  = null;
+  let rbuft  = null;
+  let rbufi  = null;
+  let rbufw  = 4096;   // frequency bin count
 
   let audioInputs = [];
   function refreshAudioInputs() {
@@ -40,13 +41,12 @@
       }
     }).then((stream) => {
       rbufi = actx.createMediaStreamSource(stream);
-      rbufa = actx.createAnalyser();
 
       rbufi.connect(rbufa);
 
       rbufa.fftSize = rbufw * 2;
       rbuf          = new Uint8Array(rbufa.frequencyBinCount * (rbufs + 1)); 
-      rbuft         = setInterval(recordAudioFrame, 10);
+      rbuft         = setInterval(recordAudioFrame, rbufiv);
     })
   }
 
@@ -55,6 +55,8 @@
       audio: true
     }).then((v) => {
       actx = new AudioContext();
+
+      rbufa = actx.createAnalyser();
 
       refreshAudioInputs();
       selectAudioInput();
@@ -89,11 +91,6 @@
           Attached
         {/if}
       </button>
-      <button on:click={function() {
-
-      }}>
-        Record
-      </button>
       <span>Input device: </span>
       <select on:input={function(ev) {
         selectAudioInput(ev.target[ev.target.options.selectedIndex]);
@@ -105,13 +102,20 @@
     </RibbonTab>
   </Ribbon>
   <main>
-    <!-- renderer -->
-    <div style:display="flex">
-      <BufferSpectrogramRenderer
-        bufHeight={rbufw}
-        bufLength={rbufs}
-        buf={rbuf}>
-      </BufferSpectrogramRenderer>
+    <div class="sidestrip">
+      <button>S</button>
+      <button>P</button>
+    </div>
+    <div style:display="flex" class="mainwin">
+      <!-- renderer -->
+      <div style:display="flex" class="renderertab">
+        <BufferSpectrogramRenderer
+          bufHeight={rbufw}
+          bufLength={rbufs}
+          bufInterval={rbufiv}
+          buf={rbuf}>
+        </BufferSpectrogramRenderer>
+      </div>
     </div>
   </main>
 </div>
@@ -137,11 +141,23 @@
   main {
     display: flex;
 
-    flex-direction: column;
     flex-grow: 1;
   }
 
-  main>div {
+  .mainwin {
+    display: flex;
+
+    flex-grow: 1;
+    flex-direction: column;
+  }
+
+  .sidestrip {
+    display: flex;
+
+    flex-direction: column;
+  }
+
+  .renderertab {
     flex-grow: 1;
   }
 </style>
